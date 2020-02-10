@@ -10,17 +10,21 @@ trait HasSlug
     public static function bootHasSlug()
     {
         static::saving(function (Model $model) {
-            if (empty($this->slug)) {
-                $slug = Str::slug($this->name);
-                $i = 1;
-                while ($this->otherRecordExistsWithSlug($slug) || $slug === '') {
-                    $slug = $slug . '-'  . $i;
-                    $i++;
-                }
-                $this->slug = $slug;
-            }
-
+            $model->generateUniqueSlug();
         });
+    }
+
+    protected function generateUniqueSlug()
+    {
+        if (empty($this->slug)) {
+            $slug = Str::slug($this->name);
+            $i = 1;
+            while ($this->otherRecordExistsWithSlug($slug) || $slug === '') {
+                $slug = $slug . '-'  . $i;
+                $i++;
+            }
+            $this->slug = $slug;
+        }
     }
 
     /**
