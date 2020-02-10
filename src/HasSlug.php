@@ -3,22 +3,31 @@
 namespace Spatie\Tags;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 trait HasSlug
 {
     public static function bootHasSlug()
     {
         static::saving(function (Model $model) {
-             $model->generateSlug();
+            if (empty($this->slug)) {
+                $slug = Str::slug($this->name);
+                $i = 1;
+                while ($this->otherRecordExistsWithSlug($slug) || $slug === '') {
+                    $slug = $slug . '-'  . $i;
+                    $i++;
+                }
+                $this->slug = $slug;
+            }
+
         });
     }
 
-    protected function generateSlug(): string
+    /**
+     * Determine if a record exists with the given slug.
+     */
+    protected function otherRecordExistsWithSlug($slug)
     {
-        $slugger = config('tags.slugger');
-
-        $slugger = $slugger ?: '\Illuminate\Support\Str::slug';
-
-        return call_user_func($slugger, $this->attributes['name']);
+        return (bool)static::withoutGlobalScopes()->whereSlug($slug)->first();
     }
 }
